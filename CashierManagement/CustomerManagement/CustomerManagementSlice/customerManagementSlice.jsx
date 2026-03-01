@@ -1,0 +1,218 @@
+import { createSlice } from '@reduxjs/toolkit';
+
+// Mock data for customers with proper purchase history
+const initialCustomers = [
+  {
+    id: '1',
+    fullName: 'John Doe',
+    phone: '+1 (555) 123-4567',
+    email: 'john.doe@example.com',
+    loyaltyPoints: 1250,
+    joinDate: '2023-01-15',
+    totalOrders: 15,
+    totalSpent: 4250.75,
+    averageOrderValue: 283.38,
+    purchaseHistory: [
+      {
+        orderId: 'ORD-001',
+        date: '2024-01-15',
+        time: '14:30',
+        totalAmount: 299.99,
+        items: [
+          { id: 1, name: 'Wireless Headphones', quantity: 1, price: 199.99 },
+          { id: 2, name: 'Screen Protector', quantity: 2, price: 50.00 }
+        ],
+        status: 'completed'
+      },
+      {
+        orderId: 'ORD-002',
+        date: '2024-01-10',
+        time: '11:15',
+        totalAmount: 450.50,
+        items: [
+          { id: 1, name: 'Smart Watch', quantity: 1, price: 350.00 },
+          { id: 2, name: 'Charging Cable', quantity: 3, price: 33.50 }
+        ],
+        status: 'completed'
+      }
+    ]
+  },
+  {
+    id: '2',
+    fullName: 'Jane Smith',
+    phone: '+1 (555) 987-6543',
+    email: 'jane.smith@example.com',
+    loyaltyPoints: 850,
+    joinDate: '2023-03-22',
+    totalOrders: 8,
+    totalSpent: 1850.25,
+    averageOrderValue: 231.28,
+    purchaseHistory: [
+      {
+        orderId: 'ORD-003',
+        date: '2024-01-12',
+        time: '16:45',
+        totalAmount: 150.75,
+        items: [
+          { id: 1, name: 'Phone Case', quantity: 1, price: 45.75 },
+          { id: 2, name: 'Ear Buds', quantity: 1, price: 105.00 }
+        ],
+        status: 'completed'
+      }
+    ]
+  },
+  {
+    id: '3',
+    fullName: 'Robert Johnson',
+    phone: '+1 (555) 456-7890',
+    email: 'robert.j@example.com',
+    loyaltyPoints: 2100,
+    joinDate: '2022-11-05',
+    totalOrders: 22,
+    totalSpent: 6520.50,
+    averageOrderValue: 296.39,
+    purchaseHistory: [
+      {
+        orderId: 'ORD-004',
+        date: '2024-01-08',
+        time: '09:20',
+        totalAmount: 599.99,
+        items: [
+          { id: 1, name: 'Tablet', quantity: 1, price: 599.99 }
+        ],
+        status: 'completed'
+      },
+      {
+        orderId: 'ORD-005',
+        date: '2024-01-05',
+        time: '13:45',
+        totalAmount: 225.50,
+        items: [
+          { id: 1, name: 'Laptop Case', quantity: 1, price: 75.50 },
+          { id: 2, name: 'Mouse', quantity: 1, price: 150.00 }
+        ],
+        status: 'completed'
+      }
+    ]
+  },
+  {
+    id: '4',
+    fullName: 'Emily Wilson',
+    phone: '+1 (555) 234-5678',
+    email: 'emily.w@example.com',
+    loyaltyPoints: 420,
+    joinDate: '2023-07-30',
+    totalOrders: 5,
+    totalSpent: 875.00,
+    averageOrderValue: 175.00,
+    purchaseHistory: []
+  }
+];
+
+const initialState = {
+  customers: initialCustomers,
+  selectedCustomer: initialCustomers[0], // Auto-select first customer for testing
+  searchQuery: '',
+  filteredCustomers: initialCustomers,
+  isLoading: false,
+  error: null
+};
+
+const customerManagementSlice = createSlice({
+  name: 'customerManagement',
+  initialState,
+  reducers: {
+    setSelectedCustomer: (state, action) => {
+      state.selectedCustomer = action.payload;
+    },
+    setSearchQuery: (state, action) => {
+      state.searchQuery = action.payload;
+      const query = action.payload.toLowerCase();
+      
+      if (!query.trim()) {
+        state.filteredCustomers = state.customers;
+      } else {
+        state.filteredCustomers = state.customers.filter(customer =>
+          customer.fullName.toLowerCase().includes(query) ||
+          customer.phone.toLowerCase().includes(query) ||
+          customer.email.toLowerCase().includes(query)
+        );
+      }
+    },
+    addCustomer: (state, action) => {
+      const newCustomer = {
+        ...action.payload,
+        id: Date.now().toString(),
+        loyaltyPoints: 0,
+        totalOrders: 0,
+        totalSpent: 0,
+        averageOrderValue: 0,
+        purchaseHistory: [],
+        joinDate: new Date().toISOString().split('T')[0]
+      };
+      state.customers.unshift(newCustomer);
+      state.filteredCustomers.unshift(newCustomer);
+    },
+    updateCustomer: (state, action) => {
+      const { id, updates } = action.payload;
+      const index = state.customers.findIndex(c => c.id === id);
+      if (index !== -1) {
+        state.customers[index] = { ...state.customers[index], ...updates };
+        state.filteredCustomers = state.filteredCustomers.map(c =>
+          c.id === id ? { ...c, ...updates } : c
+        );
+        
+        if (state.selectedCustomer?.id === id) {
+          state.selectedCustomer = { ...state.selectedCustomer, ...updates };
+        }
+      }
+    },
+    addPoints: (state, action) => {
+      const { customerId, points } = action.payload;
+      const customer = state.customers.find(c => c.id === customerId);
+      if (customer) {
+        customer.loyaltyPoints += points;
+        
+        if (state.selectedCustomer?.id === customerId) {
+          state.selectedCustomer.loyaltyPoints += points;
+        }
+      }
+    },
+    clearSelectedCustomer: (state) => {
+      state.selectedCustomer = null;
+    },
+    addPurchase: (state, action) => {
+      const { customerId, order } = action.payload;
+      const customer = state.customers.find(c => c.id === customerId);
+      if (customer) {
+        // Add order to purchase history
+        customer.purchaseHistory.unshift(order);
+        
+        // Update customer stats
+        customer.totalOrders += 1;
+        customer.totalSpent += order.totalAmount;
+        customer.averageOrderValue = customer.totalSpent / customer.totalOrders;
+        
+        // Update selected customer if it's the same
+        if (state.selectedCustomer?.id === customerId) {
+          state.selectedCustomer.purchaseHistory.unshift(order);
+          state.selectedCustomer.totalOrders += 1;
+          state.selectedCustomer.totalSpent += order.totalAmount;
+          state.selectedCustomer.averageOrderValue = state.selectedCustomer.totalSpent / state.selectedCustomer.totalOrders;
+        }
+      }
+    }
+  }
+});
+
+export const {
+  setSelectedCustomer,
+  setSearchQuery,
+  addCustomer,
+  updateCustomer,
+  addPoints,
+  clearSelectedCustomer,
+  addPurchase
+} = customerManagementSlice.actions;
+
+export default customerManagementSlice.reducer;
