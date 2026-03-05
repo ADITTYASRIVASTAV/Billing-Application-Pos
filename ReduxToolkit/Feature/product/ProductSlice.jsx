@@ -1,5 +1,4 @@
 
-
 import { createSlice } from '@reduxjs/toolkit';
 import {
   createProduct,
@@ -16,16 +15,17 @@ const dummyProducts = [
     id: 1,
     name: 'Premium Coffee Blend',
     sku: 'PC-001',
-    category: 'Beverages', // String for dummy data
+    category: 'Beverages',
     price: 299,
     image: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stock: 50,
+    quantity: 50,
     description: '',
     mrp: 299,
     sellingPrice: 299,
-    brand: '',
-    color: '',
-    store: ''
+    brand: 'CoffeeCo',
+    color: 'Brown',
+    store: 'Main Store',
+    storeId: 1
   },
   {
     id: 2,
@@ -34,13 +34,14 @@ const dummyProducts = [
     category: 'Bakery',
     price: 189,
     image: 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stock: 30,
+    quantity: 50,
     description: '',
     mrp: 189,
     sellingPrice: 189,
-    brand: '',
-    color: '',
-    store: ''
+    brand: 'BakeryFresh',
+    color: 'Brown',
+    store: 'Main Store',
+    storeId: 1
   },
   {
     id: 3,
@@ -49,13 +50,14 @@ const dummyProducts = [
     category: 'Beverages',
     price: 249,
     image: 'https://images.pexels.com/photos/1417945/pexels-photo-1417945.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stock: 40,
+    quantity: 50,
     description: '',
     mrp: 249,
     sellingPrice: 249,
-    brand: '',
-    color: '',
-    store: ''
+    brand: 'TeaHaven',
+    color: 'Green',
+    store: 'Main Store',
+    storeId: 1
   }
 ];
 
@@ -88,7 +90,8 @@ const normalizeProduct = (product) => {
     category: product.category?.name || product.category || 'Uncategorized',
     price: product.sellingPrice || product.price || 0,
     image: product.img || product.image || '',
-    stock: product.stock || 0,
+      quantity: product.quantity || 0,  // FIXED: using quantity from backend
+    quantity: product.quantity || 0,
     description: product.description || '',
     mrp: product.mrp || 0,
     sellingPrice: product.sellingPrice || 0,
@@ -98,6 +101,7 @@ const normalizeProduct = (product) => {
     storeId: product.storeId || null
   };
 };
+
 
 const productSlice = createSlice({
   name: 'product',
@@ -114,19 +118,52 @@ const productSlice = createSlice({
     },
 
     // Stock management
+    // updateProductStock: (state, action) => {
+    //   const { id, quantity } = action.payload;
+    //   const product = state.products.find(p => p.id === id);
+    //   if (product) {
+    //     product.stock -= quantity;
+    //   }
+    // },
+
+
+    
+        // FIXED: Stock management
     updateProductStock: (state, action) => {
       const { id, quantity } = action.payload;
       const product = state.products.find(p => p.id === id);
       if (product) {
-        product.stock -= quantity;
+        product.quantity = Math.max(0, product.quantity - quantity);
+      }
+      
+      // Update filtered products if search is active
+      if (state.searchQuery && state.filteredProducts.length > 0) {
+        state.filteredProducts = state.filteredProducts.map(p => 
+          p.id === id ? { ...p, quantity: Math.max(0, p.quantity - quantity) } : p
+        );
       }
     },
 
-    restoreProductStock: (state, action) => {
+    // restoreProductStock: (state, action) => {
+    //   const { id, quantity } = action.payload;
+    //   const product = state.products.find(p => p.id === id);
+    //   if (product && product.quantity >= quantity) {
+    //     product.stock += quantity;
+    //   }
+    // },
+
+
+        restoreProductStock: (state, action) => {
       const { id, quantity } = action.payload;
       const product = state.products.find(p => p.id === id);
       if (product) {
-        product.stock += quantity;
+        product.quantity += quantity;
+      }
+      
+      if (state.searchQuery && state.filteredProducts.length > 0) {
+        state.filteredProducts = state.filteredProducts.map(p => 
+          p.id === id ? { ...p, quantity: p.quantity + quantity } : p
+        );
       }
     },
 
@@ -139,7 +176,7 @@ const productSlice = createSlice({
           : 1,
         price: action.payload.sellingPrice || action.payload.price,
         image: action.payload.img || action.payload.image,
-        stock: action.payload.stock || 0,
+         quantity: action.payload.quantity || 0,
         category: action.payload.category || 'Uncategorized'
       };
       state.products.push(newProduct);

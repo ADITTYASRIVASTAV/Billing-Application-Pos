@@ -12,6 +12,7 @@ import productReducer from "./Feature/product/ProductSlice"
 
 const globalstate = configureStore({
     reducer:{
+    // inventory: inventoryReducer
     product: productReducer,
     cart: cartReducer,
     customer: customerReducer,           

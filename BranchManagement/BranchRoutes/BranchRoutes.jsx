@@ -18,7 +18,6 @@ function BranchRoutes() {
       <Route path="inventory" element={<Inventory/>}/>
        <Route path="employees" element={<BranchEmployees/>}/>
        <Route path="settings" element={<Branchsettings/>}/>
-       
     </Route>
   </Routes>
   )

@@ -20,9 +20,14 @@ const ProductCard = ({ product, onEdit, onDelete, onClick }) => {
   };
 
   // Helper function to get stock from inventory
+  // const getStock = () => {
+  //   return product.inventory?.quantity || 0;
+  // };
+
+
   const getStock = () => {
-    return product.inventory?.quantity || 0;
-  };
+  return product.quantity || 0;
+};
 
   return (
     <div
@@ -92,7 +97,7 @@ const ProductCard = ({ product, onEdit, onDelete, onClick }) => {
 
           {/* Stock from inventory */}
           <span className="text-sm text-gray-500">
-            Stock: {getStock()}
+            quantity: {getStock()}
           </span>
         </div>
         

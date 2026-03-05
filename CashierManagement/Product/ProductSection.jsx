@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Search, Package, Plus} from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -52,7 +53,8 @@ const ProductSection = () => {
     color: '',
     image: '', // Changed from 'img' to 'image' to match your JSON
     categoryId: '',
-    storeId: ''
+    storeId: '',
+    quantity: ''  // ADDED quantity field
   });
 
   const [formErrors, setFormErrors] = useState({});
@@ -82,16 +84,36 @@ const ProductSection = () => {
     }
   };
 
+  // const handleProductClick = (product) => {
+  //   // Stock comes from inventory in the response
+  //   // const currentStock = product.inventory?.quantity || 0;
+  //      const currentStock = product.quantity || 0;
+  //   if (currentStock <= 0) {
+  //     alert(`${product.name} is out of stock!`);
+  //     return;
+  //   }
+  //   dispatch(addToCart(product));
+  //   // Note: updateProductStock will need to handle inventory
+  // };
+
+
   const handleProductClick = (product) => {
-    // Stock comes from inventory in the response
-    const currentStock = product.inventory?.quantity || 0;
-    if (currentStock <= 0) {
-      alert(`${product.name} is out of stock!`);
-      return;
-    }
-    dispatch(addToCart(product));
-    // Note: updateProductStock will need to handle inventory
-  };
+  const currentStock = product.quantity || 0;
+
+  if (currentStock <= 0) {
+    alert(`${product.name} is out of stock!`);
+    return;
+  }
+
+  // Add to cart
+  dispatch(addToCart(product));
+
+  // Decrease stock locally
+  dispatch(updateProductStock({ 
+    id: product.id, 
+    quantity: 1 
+  }));
+};
 
   const validateForm = () => {
     const errors = {};
@@ -117,6 +139,13 @@ const ProductSection = () => {
     if (!newProduct.image.trim()) {
       errors.image = 'Image URL is required';
     }
+
+        // ADDED quantity validation for new products
+    if (!editingProductId) {
+      if (!newProduct.quantity || parseInt(newProduct.quantity) < 0) {
+        errors.quantity = 'Valid quantity is required';
+      }
+    }
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -140,7 +169,8 @@ const ProductSection = () => {
         color: newProduct.color.trim(),
         img: newProduct.image.trim(), // Using 'image' to match JSON
         categoryId: parseInt(newProduct.categoryId),
-        storeId: parseInt(userStoreId)
+        storeId: parseInt(userStoreId),
+         quantity: newProduct.quantity ? parseInt(newProduct.quantity) : 0  // ADDED quantity
       };
 
       console.log('Sending product data to backend:', productData);
@@ -183,7 +213,8 @@ const ProductSection = () => {
       color: product.color || '',
       image: product.image || product.img || '', // Handle both image and img fields
       categoryId: product.categoryId || product.category?.id || '',
-      storeId: product.storeId || ''
+      storeId: product.storeId || '',
+       quantity: product.quantity || ''  // ADDED quantity for edit
     });
     setShowAddModal(true);
   };
@@ -211,7 +242,8 @@ const ProductSection = () => {
       color: '',
       image: '',
       categoryId: '',
-      storeId: ''
+      storeId: '',
+         quantity: ''  // Reset quantity
     });
     setEditingProductId(null);
     setFormErrors({});
@@ -241,8 +273,6 @@ const ProductSection = () => {
   const displayProducts = filteredProducts.length > 0 ? filteredProducts : products;
 
 
-
-  
 
   return (
     <div className="h-full flex flex-col">
@@ -337,6 +367,4 @@ const ProductSection = () => {
 };
 
 export default ProductSection;
-
-
 
