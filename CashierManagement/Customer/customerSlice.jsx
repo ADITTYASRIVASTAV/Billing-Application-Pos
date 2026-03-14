@@ -1,4 +1,4 @@
-// src/features/customer/customerSlice.js
+// // src/features/customer/customerSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {

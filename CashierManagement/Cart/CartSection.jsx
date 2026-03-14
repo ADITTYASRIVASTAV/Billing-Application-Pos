@@ -164,20 +164,20 @@ const CartSection = () => {
       <div className="border-t border-gray-900 p-1 space-y-1">
         <div className="flex justify-between text-sm">
           <span className="text-gray-700">Subtotal</span>
-          <span className="font-medium">₹{subtotal.toFixed(2)}</span>
+          <span className="font-medium">₹{subtotal.toFixed(1)}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-900">Tax (18% GST)</span>
-          <span className="font-medium">₹{tax.toFixed(2)}</span>
+          <span className="font-medium">₹{tax.toFixed(1)}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Discount</span>
-          <span className="font-medium text-green-400">-₹{discount.toFixed(2)}</span>
+          <span className="font-medium text-green-400">-₹{discount.toFixed(1)}</span>
         </div>
         <div className="border-t pt-1">
           <div className="flex justify-between font-bold text-lg">
             <span>Total</span>
-            <span>₹{total.toFixed(2)}</span>
+            <span>₹{total.toFixed(1)}</span>
           </div>
         </div>
       </div>

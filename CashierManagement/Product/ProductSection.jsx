@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Search, Package, Plus} from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -41,8 +39,10 @@ const ProductSection = () => {
   const [editingProductId, setEditingProductId] = useState(null);
   const [localError, setLocalError] = useState(null);
   const [storeId, setLocalStoreId] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchInput, setSearchInput] = useState(''); // Local input state
   
-  // Form state - EXACTLY matching your JSON fields (NO STOCK)
+  // Form state
   const [newProduct, setNewProduct] = useState({
     name: '',
     sku: '',
@@ -51,19 +51,18 @@ const ProductSection = () => {
     sellingPrice: '',
     brand: '',
     color: '',
-    image: '', // Changed from 'img' to 'image' to match your JSON
+    image: '',
     categoryId: '',
     storeId: '',
-    quantity: ''  // ADDED quantity field
+    quantity: ''
   });
 
   const [formErrors, setFormErrors] = useState({});
 
   // Fetch products when component mounts
   useEffect(() => {
-    // Get storeId from localStorage or auth context
     const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    const userStoreId = userData?.store?.id || 1; // Default to 1 for testing
+    const userStoreId = userData?.store?.id || 1;
     
     if (userStoreId) {
       setLocalStoreId(userStoreId);
@@ -72,53 +71,95 @@ const ProductSection = () => {
     }
   }, [dispatch]);
 
-  // Handle search with API
-  const handleSearch = (e) => {
+  // ✅ FIXED: Handle search input - ONLY updates local state, NOT Redux
+  const handleSearchInput = (e) => {
     const query = e.target.value;
-    dispatch(setSearchQuery(query));
+    setSearchInput(query); // Update local state only
+    // Don't update Redux search query yet
+    // Don't call API yet
+  };
+
+  // ✅ NEW: Handle search button click
+  const handleSearch = () => {
+    if (!storeId) {
+      setLocalError('Store ID not found');
+      return;
+    }
+
+    console.log('🔍 Performing search for:', searchInput);
+    setIsSearching(true);
     
-    if (query.trim() && storeId) {
-      dispatch(searchProducts({ storeId, keyword: query }));
-    } else if (storeId) {
-      dispatch(getProductsByStore(storeId));
+    // Update Redux search query
+    dispatch(setSearchQuery(searchInput));
+    
+    if (searchInput && searchInput.trim() !== '') {
+      // Call search API
+      dispatch(searchProducts({ 
+        storeId, 
+        keyword: searchInput.trim() 
+      }))
+        .unwrap()
+        .then((result) => {
+          console.log('✅ Search completed. Results:', result?.length || 0);
+          setIsSearching(false);
+        })
+        .catch((err) => {
+          console.error('❌ Search failed:', err);
+          setLocalError(err.message || 'Search failed');
+          setIsSearching(false);
+        });
+    } else {
+      // If search is empty, fetch all products
+      dispatch(getProductsByStore(storeId))
+        .unwrap()
+        .then(() => {
+          setIsSearching(false);
+        })
+        .catch((err) => {
+          console.error('❌ Fetch failed:', err);
+          setLocalError(err.message || 'Failed to fetch products');
+          setIsSearching(false);
+        });
     }
   };
 
-  // const handleProductClick = (product) => {
-  //   // Stock comes from inventory in the response
-  //   // const currentStock = product.inventory?.quantity || 0;
-  //      const currentStock = product.quantity || 0;
-  //   if (currentStock <= 0) {
-  //     alert(`${product.name} is out of stock!`);
-  //     return;
-  //   }
-  //   dispatch(addToCart(product));
-  //   // Note: updateProductStock will need to handle inventory
-  // };
+  // ✅ NEW: Handle Enter key press
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
+  // ✅ NEW: Clear search
+  const handleClearSearch = () => {
+    setSearchInput('');
+    dispatch(setSearchQuery(''));
+    if (storeId) {
+      setIsSearching(true);
+      dispatch(getProductsByStore(storeId))
+        .unwrap()
+        .finally(() => setIsSearching(false));
+    }
+  };
 
   const handleProductClick = (product) => {
-  const currentStock = product.quantity || 0;
+    const currentStock = product.quantity || 0;
 
-  if (currentStock <= 0) {
-    alert(`${product.name} is out of stock!`);
-    return;
-  }
+    if (currentStock <= 0) {
+      alert(`${product.name} is out of stock!`);
+      return;
+    }
 
-  // Add to cart
-  dispatch(addToCart(product));
-
-  // Decrease stock locally
-  dispatch(updateProductStock({ 
-    id: product.id, 
-    quantity: 1 
-  }));
-};
+    dispatch(addToCart(product));
+    dispatch(updateProductStock({ 
+      id: product.id, 
+      quantity: 1 
+    }));
+  };
 
   const validateForm = () => {
     const errors = {};
     
-    // Required fields based on your JSON
     if (!newProduct.name.trim()) errors.name = 'Product name is required';
     if (!newProduct.sku.trim()) errors.sku = 'SKU is required';
     if (!newProduct.sellingPrice || parseFloat(newProduct.sellingPrice) <= 0) {
@@ -140,7 +181,6 @@ const ProductSection = () => {
       errors.image = 'Image URL is required';
     }
 
-        // ADDED quantity validation for new products
     if (!editingProductId) {
       if (!newProduct.quantity || parseInt(newProduct.quantity) < 0) {
         errors.quantity = 'Valid quantity is required';
@@ -158,7 +198,6 @@ const ProductSection = () => {
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
       const userStoreId = userData?.store?.id || storeId;
 
-      // Product data - EXACTLY matching your JSON structure
       const productData = {
         name: newProduct.name.trim(),
         sku: newProduct.sku.trim(),
@@ -167,23 +206,21 @@ const ProductSection = () => {
         sellingPrice: parseFloat(newProduct.sellingPrice),
         brand: newProduct.brand.trim(),
         color: newProduct.color.trim(),
-        img: newProduct.image.trim(), // Using 'image' to match JSON
+        img: newProduct.image.trim(),
         categoryId: parseInt(newProduct.categoryId),
         storeId: parseInt(userStoreId),
-         quantity: newProduct.quantity ? parseInt(newProduct.quantity) : 0  // ADDED quantity
+        quantity: newProduct.quantity ? parseInt(newProduct.quantity) : 0
       };
 
       console.log('Sending product data to backend:', productData);
 
       if (editingProductId) {
-        // UPDATE existing product
         await dispatch(updateProduct({ 
           id: editingProductId, 
           productData 
         })).unwrap();
         console.log('Product updated successfully');
       } else {
-        // CREATE new product
         await dispatch(createProduct(productData)).unwrap();
         console.log('Product created successfully');
       }
@@ -200,7 +237,6 @@ const ProductSection = () => {
     }
   };
 
-
   const handleEditProduct = (product) => {
     setEditingProductId(product.id);
     setNewProduct({
@@ -211,10 +247,10 @@ const ProductSection = () => {
       sellingPrice: product.sellingPrice || '',
       brand: product.brand || '',
       color: product.color || '',
-      image: product.image || product.img || '', // Handle both image and img fields
+      image: product.image || product.img || '',
       categoryId: product.categoryId || product.category?.id || '',
       storeId: product.storeId || '',
-       quantity: product.quantity || ''  // ADDED quantity for edit
+      quantity: product.quantity || ''
     });
     setShowAddModal(true);
   };
@@ -243,7 +279,7 @@ const ProductSection = () => {
       image: '',
       categoryId: '',
       storeId: '',
-         quantity: ''  // Reset quantity
+      quantity: ''
     });
     setEditingProductId(null);
     setFormErrors({});
@@ -272,8 +308,6 @@ const ProductSection = () => {
   // Determine which products to display
   const displayProducts = filteredProducts.length > 0 ? filteredProducts : products;
 
-
-
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -295,25 +329,69 @@ const ProductSection = () => {
           </button>
         </div>
         
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search products by name, SKU or category..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            value={reduxSearchQuery}
-            onChange={handleSearch}
-            disabled={loading}
-          />
+        {/* ✅ FIXED: Search bar with button */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Type product name and click Search..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg 
+              focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              value={searchInput}
+              onChange={handleSearchInput}
+              onKeyPress={handleKeyPress}
+              disabled={loading || isSearching}
+            />
+          </div>
+          
+          {/* Search Button */}
+          <button
+            onClick={handleSearch}
+            disabled={loading || isSearching}
+            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 
+                     transition-colors flex items-center gap-2 disabled:opacity-50 
+                     min-w-[100px] justify-center"
+          >
+            {isSearching ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Searching</span>
+              </>
+            ) : (
+              <>
+                <Search className="w-4 h-4" />
+                <span>Search</span>
+              </>
+            )}
+          </button>
+
+          {/* Clear Search Button - Show only when search is active */}
+          {reduxSearchQuery && (
+            <button
+              onClick={handleClearSearch}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 
+                       transition-colors"
+            >
+              Clear
+            </button>
+          )}
         </div>
         
+        {/* Show current search term if any */}
+        {reduxSearchQuery && (
+          <div className="mt-2 text-sm text-gray-600">
+            Currently searching for: "<span className="font-semibold">{reduxSearchQuery}</span>"
+          </div>
+        )}
+        
         {(error || localError) && (
-          <div className="mt-1 p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+          <div className="mt-2 p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
             {error || localError}
           </div>
         )}
         
-        <div className="mt-1 text-sm text-gray-500">
+        <div className="mt-2 text-sm text-gray-500">
           <span>{displayProducts.length} product{displayProducts.length !== 1 ? 's' : ''} found</span>
           {loading && <span className="ml-2 text-blue-600">Loading...</span>}
         </div>
@@ -334,7 +412,7 @@ const ProductSection = () => {
       {/* Product Grid */}
       <div className="flex-1 p-1">
         {loading && displayProducts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center  text-gray-500">
+          <div className="flex flex-col items-center justify-center text-gray-500">
             <div className="animate-spin rounded-full h-22 w-22 border-b-2 border-green-600 mb-4"></div>
             <p className="text-lg">Loading products...</p>
           </div>
@@ -342,7 +420,11 @@ const ProductSection = () => {
           <div className="flex flex-col items-center justify-center h-full text-gray-500">
             <Package className="w-4 h-4 mb-1" />
             <p>No products found</p>
-            {reduxSearchQuery && <p className="text-sm mt-1">Try a different search term</p>}
+            {reduxSearchQuery && (
+              <p className="text-sm mt-1">
+                No results for "<span className="font-semibold">{reduxSearchQuery}</span>"
+              </p>
+            )}
           </div>
         ) : (
           <div

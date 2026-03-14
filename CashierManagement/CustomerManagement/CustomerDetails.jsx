@@ -56,7 +56,9 @@ const CustomerDetails = () => {
             </div>
           </div>
         </div>
-        <div className="flex space-x-2">
+
+        {/* <div className="flex space-x-2">
+        
           <input
             type="number"
             placeholder="Points"
@@ -72,11 +74,11 @@ const CustomerDetails = () => {
             <Plus className="w-4 h-4 mr-1" />
             Add Points
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
           <div className="flex items-center justify-between">
             <div>
@@ -138,7 +140,7 @@ const CustomerDetails = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

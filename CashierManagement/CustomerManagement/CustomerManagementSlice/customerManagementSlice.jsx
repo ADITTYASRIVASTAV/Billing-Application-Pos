@@ -61,52 +61,7 @@ const initialCustomers = [
       }
     ]
   },
-  {
-    id: '3',
-    fullName: 'Robert Johnson',
-    phone: '+1 (555) 456-7890',
-    email: 'robert.j@example.com',
-    loyaltyPoints: 2100,
-    joinDate: '2022-11-05',
-    totalOrders: 22,
-    totalSpent: 6520.50,
-    averageOrderValue: 296.39,
-    purchaseHistory: [
-      {
-        orderId: 'ORD-004',
-        date: '2024-01-08',
-        time: '09:20',
-        totalAmount: 599.99,
-        items: [
-          { id: 1, name: 'Tablet', quantity: 1, price: 599.99 }
-        ],
-        status: 'completed'
-      },
-      {
-        orderId: 'ORD-005',
-        date: '2024-01-05',
-        time: '13:45',
-        totalAmount: 225.50,
-        items: [
-          { id: 1, name: 'Laptop Case', quantity: 1, price: 75.50 },
-          { id: 2, name: 'Mouse', quantity: 1, price: 150.00 }
-        ],
-        status: 'completed'
-      }
-    ]
-  },
-  {
-    id: '4',
-    fullName: 'Emily Wilson',
-    phone: '+1 (555) 234-5678',
-    email: 'emily.w@example.com',
-    loyaltyPoints: 420,
-    joinDate: '2023-07-30',
-    totalOrders: 5,
-    totalSpent: 875.00,
-    averageOrderValue: 175.00,
-    purchaseHistory: []
-  }
+
 ];
 
 const initialState = {

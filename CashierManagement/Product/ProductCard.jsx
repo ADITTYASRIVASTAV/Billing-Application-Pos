@@ -75,20 +75,9 @@ const ProductCard = ({ product, onEdit, onDelete, onClick }) => {
         <h3 className="font-medium text-gray-900 truncate" title={product.name}>
           {product.name || 'Unnamed Product'}
         </h3>
-        
-        {/* <div className="flex justify-between items-center mt-1">
-          <span className="text-sm text-gray-900"></span>
-          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-          </span>
-        </div> */}
+      
 
-        
-        {/* Brand and Color (optional display) */}
-        {/* {(product.brand || product.color) && (
-          <div className="text-xs text-gray-500 mt-1">
-            {product.brand} {product.color}
-          </div>
-        )} */}
+      
         
         <div className="flex justify-between items-center mt-1">
           <span className="text-lg font-bold text-green-600">
@@ -104,7 +93,7 @@ const ProductCard = ({ product, onEdit, onDelete, onClick }) => {
         {/* MRP display if different from selling price */}
         {product.mrp && Number(product.mrp) !== Number(product.sellingPrice) && (
           <div className="text-xs text-gray-500 line-through mt-1">
-            MRP: ₹{Number(product.mrp).toFixed(2)}
+            MRP: ₹{Number(product.mrp).toFixed(1)}
           </div>
         )}
         
